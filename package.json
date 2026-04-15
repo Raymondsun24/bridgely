@@ -4,6 +4,10 @@
   "description": "Bidirectional bridge between VS Code/Cursor and Claude Code running in any terminal",
   "version": "0.1.0",
   "publisher": "Raymondsun24",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Raymondsun24/bridgely"
+  },
   "icon": "images/icon.png",
   "engines": {
     "vscode": "^1.93.0"
@@ -14,6 +18,10 @@
   "activationEvents": [
     "onStartupFinished"
   ],
+  "scripts": {
+    "test": "vitest run",
+    "lint": "eslint src/"
+  },
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -73,6 +81,10 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.93.0",
-    "typescript": "^5.4.0"
+    "@typescript-eslint/eslint-plugin": "^8.58.2",
+    "@typescript-eslint/parser": "^8.58.2",
+    "eslint": "^9.39.4",
+    "typescript": "^5.4.0",
+    "vitest": "^3.2.4"
   }
 }

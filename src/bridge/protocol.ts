@@ -68,7 +68,7 @@ export interface RevealLineArgs {
   line: number;
 }
 
-export interface GetSelectionArgs {}
+export type GetSelectionArgs = Record<string, never>;
 
 export interface GetDiagnosticsArgs {
   path?: string;
