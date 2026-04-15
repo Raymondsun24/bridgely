@@ -1,0 +1,78 @@
+{
+  "name": "bridget",
+  "displayName": "Bridget",
+  "description": "Bidirectional bridge between VS Code/Cursor and Claude Code running in any terminal",
+  "version": "0.1.0",
+  "publisher": "Raymondsun24",
+  "icon": "images/icon.png",
+  "engines": {
+    "vscode": "^1.93.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "bridget.sendSelection",
+        "title": "Bridget: Send Selection to Terminal"
+      },
+      {
+        "command": "bridget.sendFile",
+        "title": "Bridget: Send Current File to Terminal"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "bridget.sendSelection",
+        "key": "ctrl+shift+alt+s",
+        "mac": "cmd+shift+alt+s",
+        "when": "editorTextFocus"
+      }
+    ],
+    "configuration": {
+      "title": "Bridget",
+      "properties": {
+        "bridget.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable the Bridget terminal bridge"
+        },
+        "bridget.debounceMs": {
+          "type": "number",
+          "default": 300,
+          "description": "Debounce interval for editor state updates (ms)"
+        },
+        "bridget.selectionDebounceMs": {
+          "type": "number",
+          "default": 150,
+          "description": "Debounce interval for selection changes (ms)"
+        },
+        "bridget.maxSelectionLength": {
+          "type": "number",
+          "default": 10000,
+          "description": "Maximum characters to include from text selections"
+        },
+        "bridget.maxTerminalExecutions": {
+          "type": "number",
+          "default": 50,
+          "description": "Maximum number of terminal command executions to keep in the buffer"
+        },
+        "bridget.maxTerminalOutputLength": {
+          "type": "number",
+          "default": 20000,
+          "description": "Maximum characters to capture per terminal command output"
+        }
+      }
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.93.0",
+    "typescript": "^5.4.0"
+  }
+}
