@@ -1,6 +1,6 @@
 {
-  "name": "bridget",
-  "displayName": "Bridget",
+  "name": "bridgely",
+  "displayName": "Bridgely – Claude Code Bridge for VS Code",
   "description": "Bidirectional bridge between VS Code/Cursor and Claude Code running in any terminal",
   "version": "0.1.0",
   "publisher": "Raymondsun24",
@@ -18,51 +18,51 @@
   "contributes": {
     "commands": [
       {
-        "command": "bridget.sendSelection",
-        "title": "Bridget: Send Selection to Terminal"
+        "command": "bridgely.sendSelection",
+        "title": "Bridgely: Send Selection to Terminal"
       },
       {
-        "command": "bridget.sendFile",
-        "title": "Bridget: Send Current File to Terminal"
+        "command": "bridgely.sendFile",
+        "title": "Bridgely: Send Current File to Terminal"
       }
     ],
     "keybindings": [
       {
-        "command": "bridget.sendSelection",
+        "command": "bridgely.sendSelection",
         "key": "ctrl+shift+alt+s",
         "mac": "cmd+shift+alt+s",
         "when": "editorTextFocus"
       }
     ],
     "configuration": {
-      "title": "Bridget",
+      "title": "Bridgely",
       "properties": {
-        "bridget.enabled": {
+        "bridgely.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable the Bridget terminal bridge"
+          "description": "Enable the Bridgely terminal bridge"
         },
-        "bridget.debounceMs": {
+        "bridgely.debounceMs": {
           "type": "number",
           "default": 300,
           "description": "Debounce interval for editor state updates (ms)"
         },
-        "bridget.selectionDebounceMs": {
+        "bridgely.selectionDebounceMs": {
           "type": "number",
           "default": 150,
           "description": "Debounce interval for selection changes (ms)"
         },
-        "bridget.maxSelectionLength": {
+        "bridgely.maxSelectionLength": {
           "type": "number",
           "default": 10000,
           "description": "Maximum characters to include from text selections"
         },
-        "bridget.maxTerminalExecutions": {
+        "bridgely.maxTerminalExecutions": {
           "type": "number",
           "default": 50,
           "description": "Maximum number of terminal command executions to keep in the buffer"
         },
-        "bridget.maxTerminalOutputLength": {
+        "bridgely.maxTerminalOutputLength": {
           "type": "number",
           "default": 20000,
           "description": "Maximum characters to capture per terminal command output"
