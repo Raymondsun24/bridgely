@@ -11,12 +11,6 @@ on:
       - "package*.json"
       - ".github/workflows/ts-lint.yml"
   pull_request:
-    paths:
-      - "src/**"
-      - "eslint.config.mjs"
-      - "tsconfig.json"
-      - "package*.json"
-      - ".github/workflows/ts-lint.yml"
 
 jobs:
   lint:

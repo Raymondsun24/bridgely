@@ -8,9 +8,6 @@ on:
       - "mcp/**"
       - ".github/workflows/go-lint.yml"
   pull_request:
-    paths:
-      - "mcp/**"
-      - ".github/workflows/go-lint.yml"
 
 jobs:
   lint:

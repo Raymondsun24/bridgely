@@ -1,18 +1,24 @@
 # Bridgely – Claude Code Bridge for VS Code
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![Go 1.23](https://img.shields.io/badge/Go-1.23-00ADD8?logo=go&logoColor=white)](https://golang.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.4-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-5FA04E?logo=nodedotjs&logoColor=white)](https://nodejs.org)
+[![VS Code](https://img.shields.io/badge/VS%20Code-%5E1.93-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com)
+
 Bidirectional bridge between VS Code/Cursor and Claude Code running in any terminal. Gives Claude real-time awareness of your editor state and lets it open files, show diffs, and fetch LSP diagnostics.
 
 ## Architecture
 
 ```
 VS Code/Cursor Extension          Terminal (Claude Code)
-┌──────────────────────┐          ┌──────────────────────┐
+┌──────────────────────┐          ┌────────────────────────┐
 │ editorStateWriter    │ ──JSON──→│ bridgely hook:context  │
-│ (tracks editor state)│          │ (injects into prompt)│
-├──────────────────────┤          ├──────────────────────┤
-│ commandWatcher       │ ←─JSON──│ bridgely / MCP        │
-│ (executes commands)  │          │ (sends commands)     │
-└──────────────────────┘          └──────────────────────┘
+│ (tracks editor state)│          │ (injects into prompt)  │
+├──────────────────────┤          ├────────────────────────┤
+│ commandWatcher       │ ←──JSON──│ bridgely / MCP         │
+│ (executes commands)  │          │ (sends commands)       │
+└──────────────────────┘          └────────────────────────┘
          ↕ files at ~/.claude/bridge/sessions/
 ```
 
