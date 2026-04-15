@@ -202,17 +202,3 @@ make clean        # Remove build artifacts
 ```
 
 After recompiling the extension, reload the editor (`Cmd+Shift+P` → `Developer: Reload Window`).
-
-### Live development (extension symlink)
-
-To avoid reinstalling the `.vsix` on every change, symlink the project directly into the extensions folder:
-
-```bash
-# Cursor
-ln -s "$(pwd)" ~/.cursor/extensions/raymondsun24.bridgely-0.1.0
-
-# VS Code
-ln -s "$(pwd)" ~/.vscode/extensions/raymondsun24.bridgely-0.1.0
-```
-
-Then `make extension` + reload is all you need on each change.
