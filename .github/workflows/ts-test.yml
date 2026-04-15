@@ -11,12 +11,6 @@ on:
       - "package*.json"
       - ".github/workflows/ts-test.yml"
   pull_request:
-    paths:
-      - "src/**"
-      - "vitest.config.ts"
-      - "tsconfig.json"
-      - "package*.json"
-      - ".github/workflows/ts-test.yml"
 
 jobs:
   test:

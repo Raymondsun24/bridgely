@@ -8,9 +8,6 @@ on:
       - "mcp/**"
       - ".github/workflows/go-test.yml"
   pull_request:
-    paths:
-      - "mcp/**"
-      - ".github/workflows/go-test.yml"
 
 jobs:
   test:
