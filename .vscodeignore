@@ -1,8 +1,15 @@
 src/**
 node_modules/**
 .gitignore
+.claude/**
+.github/**
 tsconfig.json
+vitest.config.ts
+eslint.config.mjs
+Makefile
 cli/**
-claude/**
+mcp/**
 **/*.ts
 **/*.map
+**/*.vsix
+**/*.test.js
