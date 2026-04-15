@@ -1,4 +1,4 @@
-module github.com/Raymondsun24/bridget/mcp
+module github.com/Raymondsun24/bridgely/mcp
 
 go 1.23.2
 

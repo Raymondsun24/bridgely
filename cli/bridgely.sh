@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
-# Bridget CLI
+# Bridgely CLI
 # Works with any terminal emulator — Ghostty, iTerm2, Alacritty, Kitty, Terminal.app, etc.
 # Supports multiple concurrent editor sessions with CWD-based bindings.
 #
 # Usage:
-#   bridget sessions              List active editor sessions
-#   bridget bind [editor-session] Bind CWD to an editor session (interactive if omitted)
-#   bridget unbind                Remove binding for CWD
-#   bridget bindings              List all bindings
-#   bridget status  [-s ID]       Show full editor state
-#   bridget file    [-s ID]       Print active file path
-#   bridget selection [-s ID]     Print current text selection
-#   bridget open <path> [line]    Tell the editor to open a file [-s ID]
-#   bridget reveal <path> <line>  Scroll to a line without changing focus [-s ID]
-#   bridget diff <path>           Show git diff for a file in the editor
-#   bridget diagnostics [path]    Get LSP diagnostics [-s ID]
-#   bridget watch   [-s ID]       Stream editor state changes
+#   bridgely sessions              List active editor sessions
+#   bridgely bind [editor-session] Bind CWD to an editor session (interactive if omitted)
+#   bridgely unbind                Remove binding for CWD
+#   bridgely bindings              List all bindings
+#   bridgely status  [-s ID]       Show full editor state
+#   bridgely file    [-s ID]       Print active file path
+#   bridgely selection [-s ID]     Print current text selection
+#   bridgely open <path> [line]    Tell the editor to open a file [-s ID]
+#   bridgely reveal <path> <line>  Scroll to a line without changing focus [-s ID]
+#   bridgely diff <path>           Show git diff for a file in the editor
+#   bridgely diagnostics [path]    Get LSP diagnostics [-s ID]
+#   bridgely watch   [-s ID]       Stream editor state changes
 #
 # Hook commands (for ~/.claude/settings.json):
-#   bridget hook:context          UserPromptSubmit — inject editor context into prompt
-#   bridget hook:preview          PreToolUse (Edit|Write) — show preview diff in editor
-#   bridget hook:edit             PostToolUse (Edit|Write) — close preview diff tab
+#   bridgely hook:context          UserPromptSubmit — inject editor context into prompt
+#   bridgely hook:preview          PreToolUse (Edit|Write) — show preview diff in editor
+#   bridgely hook:edit             PostToolUse (Edit|Write) — close preview diff tab
 
 set -euo pipefail
 
@@ -441,7 +441,7 @@ case "${1:-help}" in
     count=$(echo "$bindings" | jq 'length')
 
     if [ "$count" -eq 0 ]; then
-      echo "No bindings configured. Use 'bridget bind' to set one up."
+      echo "No bindings configured. Use 'bridgely bind' to set one up."
       exit 0
     fi
 
@@ -479,7 +479,7 @@ case "${1:-help}" in
     check_jq
     shift
     if [ $# -lt 1 ]; then
-      echo "Usage: bridget open <path> [line] [column] [-s session]" >&2
+      echo "Usage: bridgely open <path> [line] [column] [-s session]" >&2
       exit 1
     fi
     state_file=$(resolve_state_file "$SESSION_FILTER")
@@ -500,7 +500,7 @@ case "${1:-help}" in
     check_jq
     shift
     if [ $# -lt 2 ]; then
-      echo "Usage: bridget reveal <path> <line> [-s session]" >&2
+      echo "Usage: bridgely reveal <path> <line> [-s session]" >&2
       exit 1
     fi
     state_file=$(resolve_state_file "$SESSION_FILTER")
@@ -512,7 +512,7 @@ case "${1:-help}" in
     check_jq
     shift
     if [ $# -lt 1 ]; then
-      echo "Usage: bridget diff <path> [-s session]" >&2
+      echo "Usage: bridgely diff <path> [-s session]" >&2
       exit 1
     fi
     file_path="$1"
@@ -682,7 +682,7 @@ EOF
           echo "$bindings" > "$BINDINGS_FILE"
           echo "[Editor Bridge] Auto-bound ${cwd} → ${bind_sid} (workspace match)"
         elif [ ${#unique_matches[@]} -gt 1 ]; then
-          echo "[Editor Bridge] Multiple editors match this workspace. Run: bridget bind"
+          echo "[Editor Bridge] Multiple editors match this workspace. Run: bridgely bind"
         fi
       fi
     fi
@@ -786,9 +786,9 @@ EOF
   # ── help ──
   help|--help|-h)
     cat <<HELP
-Bridget
+Bridgely
 
-Usage: bridget <command> [args] [-s session]
+Usage: bridgely <command> [args] [-s session]
 
 Global flags:
   -s, --session ID    Target a specific editor session (partial match OK)
@@ -817,18 +817,18 @@ Hook commands (for use in ~/.claude/settings.json):
   help                  Show this help
 
 Examples:
-  bridget sessions
-  bridget bind                         # interactive session picker
-  bridget bind Cursor-5800             # bind CWD to specific session
-  bridget bindings                     # list all bindings
-  bridget diff src/main.ts             # auto-routes via binding
-  bridget file -s Cursor               # explicit session override
-  bridget open src/main.ts 42
+  bridgely sessions
+  bridgely bind                         # interactive session picker
+  bridgely bind Cursor-5800             # bind CWD to specific session
+  bridgely bindings                     # list all bindings
+  bridgely diff src/main.ts             # auto-routes via binding
+  bridgely file -s Cursor               # explicit session override
+  bridgely open src/main.ts 42
 HELP
     ;;
 
   *)
-    echo "Unknown command: $1 (try 'bridget help')" >&2
+    echo "Unknown command: $1 (try 'bridgely help')" >&2
     exit 1
     ;;
 esac

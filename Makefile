@@ -1,17 +1,17 @@
-MCP_BIN := mcp/bridget
+MCP_BIN := mcp/bridgely
 
 .PHONY: all extension mcp watch package clean
 
 all: extension mcp
 
 extension:
-	tsc -p ./
+	npx tsc -p ./
 
 mcp:
-	go -C mcp build -o bridget .
+	go -C mcp build -o bridgely .
 
 watch:
-	tsc -watch -p ./
+	npx tsc -watch -p ./
 
 package:
 	npx @vscode/vsce package --no-dependencies

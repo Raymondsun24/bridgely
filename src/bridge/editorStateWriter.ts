@@ -17,7 +17,7 @@ export class EditorStateWriter implements vscode.Disposable {
     this.sessionId = sessionId;
     this.terminalWatcher = terminalWatcher;
 
-    const config = vscode.workspace.getConfiguration("bridget");
+    const config = vscode.workspace.getConfiguration("bridgely");
     const debounceMs = config.get<number>("debounceMs", 300);
     const selectionDebounceMs = config.get<number>("selectionDebounceMs", 150);
 
@@ -77,7 +77,7 @@ export class EditorStateWriter implements vscode.Disposable {
     const editor = vscode.window.activeTextEditor;
     if (!editor || editor.selection.isEmpty) return null;
 
-    const config = vscode.workspace.getConfiguration("bridget");
+    const config = vscode.workspace.getConfiguration("bridgely");
     const maxLen = config.get<number>("maxSelectionLength", 10000);
     const sel = editor.selection;
     let text = editor.document.getText(sel);
@@ -130,7 +130,7 @@ export class EditorStateWriter implements vscode.Disposable {
     try {
       await atomicWriteJson(getSessionStatePath(this.sessionId), state);
     } catch (err) {
-      console.error("[bridget] Failed to write editor state:", err);
+      console.error("[bridgely] Failed to write editor state:", err);
     }
   }
 

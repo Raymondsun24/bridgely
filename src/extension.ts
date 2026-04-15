@@ -18,7 +18,7 @@ function getIdeName(): string {
 export async function activate(
   context: vscode.ExtensionContext
 ): Promise<void> {
-  const config = vscode.workspace.getConfiguration("bridget");
+  const config = vscode.workspace.getConfiguration("bridgely");
   if (!config.get<boolean>("enabled", true)) {
     return;
   }
@@ -42,23 +42,23 @@ export async function activate(
 
   // Manual commands
   context.subscriptions.push(
-    vscode.commands.registerCommand("bridget.sendSelection", () => {
+    vscode.commands.registerCommand("bridgely.sendSelection", () => {
       // Force an immediate state write by triggering the writer
       // The selection is already captured in the regular state updates,
       // but this command lets users explicitly push selection to the bridge
       const editor = vscode.window.activeTextEditor;
       if (editor && !editor.selection.isEmpty) {
         vscode.window.showInformationMessage(
-          `Bridget: Selection sent (${editor.selection.end.line - editor.selection.start.line + 1} lines)`
+          `Bridgely: Selection sent (${editor.selection.end.line - editor.selection.start.line + 1} lines)`
         );
       } else {
         vscode.window.showInformationMessage(
-          "Bridget: No text selected"
+          "Bridgely: No text selected"
         );
       }
     }),
 
-    vscode.commands.registerCommand("bridget.sendFile", () => {
+    vscode.commands.registerCommand("bridgely.sendFile", () => {
       const editor = vscode.window.activeTextEditor;
       if (editor) {
         const rel = vscode.workspace.asRelativePath(
@@ -66,20 +66,20 @@ export async function activate(
           false
         );
         vscode.window.showInformationMessage(
-          `Bridget: File context sent (${rel})`
+          `Bridgely: File context sent (${rel})`
         );
       } else {
-        vscode.window.showInformationMessage("Bridget: No active file");
+        vscode.window.showInformationMessage("Bridgely: No active file");
       }
     })
   );
 
-  console.log(`[bridget] Extension activated (session: ${sessionId})`);
+  console.log(`[bridgely] Extension activated (session: ${sessionId})`);
 }
 
 export function deactivate(): void {
   terminalWatcher?.dispose();
   stateWriter?.dispose();
   commandWatcher?.dispose();
-  console.log("[bridget] Extension deactivated");
+  console.log("[bridgely] Extension deactivated");
 }
