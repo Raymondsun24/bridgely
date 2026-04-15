@@ -200,5 +200,3 @@ make watch        # Watch mode for extension TypeScript
 make package      # Create .vsix package
 make clean        # Remove build artifacts
 ```
-
-After recompiling the extension, reload the editor (`Cmd+Shift+P` → `Developer: Reload Window`).
