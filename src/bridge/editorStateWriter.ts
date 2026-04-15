@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
-import { EditorState, ActiveFile, Selection, VisibleFile, TerminalInfo } from "./protocol";
+import { EditorState, ActiveFile, Selection, VisibleFile } from "./protocol";
 import { TerminalWatcher } from "./terminalWatcher";
 import { atomicWriteJson } from "./atomicFile";
 import { getSessionStatePath } from "../utils/paths";

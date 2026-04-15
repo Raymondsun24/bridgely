@@ -23,6 +23,9 @@ func homeDir() string {
 }
 
 func bridgeDir() string {
+	if d := os.Getenv("BRIDGELY_BRIDGE_DIR"); d != "" {
+		return d
+	}
 	return filepath.Join(homeDir(), ".claude", "bridge")
 }
 
@@ -35,7 +38,7 @@ func legacyStateFile() string {
 }
 
 func ensureBridgeDir() {
-	os.MkdirAll(sessionsDir(), 0o700)
+	_ = os.MkdirAll(sessionsDir(), 0o700)
 }
 
 // ── Session management ────────────────────────────────────────────────────────

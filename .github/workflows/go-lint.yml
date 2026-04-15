@@ -1,0 +1,34 @@
+name: Go Lint
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "mcp/**"
+      - ".github/workflows/go-lint.yml"
+  pull_request:
+    paths:
+      - "mcp/**"
+      - ".github/workflows/go-lint.yml"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache-dependency-path: mcp/go.sum
+
+      - name: go vet
+        working-directory: mcp
+        run: go vet ./...
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: mcp
+          version: latest

@@ -16,7 +16,6 @@ import { safeReadJson, atomicWriteJson } from "./atomicFile";
 import {
   getSessionCommandsPath,
   getSessionCommandResultsPath,
-  getSessionsDir,
 } from "../utils/paths";
 
 export class CommandWatcher implements vscode.Disposable {
