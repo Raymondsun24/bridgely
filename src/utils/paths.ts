@@ -4,6 +4,7 @@ import * as os from "os";
 
 const BRIDGE_DIR = path.join(os.homedir(), ".claude", "bridge");
 const SESSIONS_DIR = path.join(BRIDGE_DIR, "sessions");
+const PROPOSED_DIR = path.join(BRIDGE_DIR, "proposed");
 
 export function getBridgeDir(): string {
   return BRIDGE_DIR;
@@ -11,6 +12,10 @@ export function getBridgeDir(): string {
 
 export function getSessionsDir(): string {
   return SESSIONS_DIR;
+}
+
+export function getProposedDir(): string {
+  return PROPOSED_DIR;
 }
 
 // Legacy single-file paths (for backward compat readers)
@@ -41,4 +46,5 @@ export function getSessionCommandResultsPath(sessionId: string): string {
 
 export async function ensureBridgeDir(): Promise<void> {
   await fs.promises.mkdir(SESSIONS_DIR, { recursive: true, mode: 0o700 });
+  await fs.promises.mkdir(PROPOSED_DIR, { recursive: true, mode: 0o700 });
 }

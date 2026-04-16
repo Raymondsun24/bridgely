@@ -637,12 +637,30 @@ EOF
         [[ "$f" == *.commands-result.json ]] && continue
         timestamp=$(jq -r '.timestamp // 0' "$f" 2>/dev/null) || continue
         age_ms=$((now_ms - timestamp))
-        [ "$age_ms" -gt "$STALENESS_MS" ] && continue
+        if [ "$age_ms" -gt "$STALENESS_MS" ]; then
+          # Clean up stale session file and its associated command files
+          sid=$(basename "$f" .json)
+          rm -f "$f" \
+            "$SESSIONS_DIR/${sid}.commands.json" \
+            "$SESSIONS_DIR/${sid}.commands-result.json"
+          continue
+        fi
         sid=$(jq -r '.sessionId // empty' "$f" 2>/dev/null)
         [ -z "$sid" ] && sid=$(basename "$f" .json)
         active_files+=("$f")
         active_sids+=("$sid")
       done
+    fi
+
+    # Prune bindings that point to sessions no longer active
+    if [ -f "$BINDINGS_FILE" ] && [ ${#active_sids[@]} -ge 0 ]; then
+      active_ids_json=$(printf '%s\n' "${active_sids[@]+"${active_sids[@]}"}" | jq -Rn '[inputs]')
+      pruned=$(jq --argjson active "$active_ids_json" \
+        'to_entries | map(select(.value as $v | $active | index($v) != null)) | from_entries' \
+        "$BINDINGS_FILE" 2>/dev/null)
+      if [ -n "$pruned" ]; then
+        echo "$pruned" > "$BINDINGS_FILE"
+      fi
     fi
 
     cwd="$(pwd)"
