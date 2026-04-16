@@ -12,11 +12,11 @@ Bidirectional bridge between VS Code/Cursor and Claude Code running in any termi
 
 **Claude reading your active file and selection**
 
-<video src="https://github.com/Raymondsun24/bridgely/releases/download/v0.1.2/bridgely-demo.mp4" autoplay loop muted playsinline></video>
+![Claude reading your active file and selection](images/demo-context.gif)
 
 **VS Code showing proposed changes from Claude**
 
-<video src="https://github.com/Raymondsun24/bridgely/releases/download/v0.1.2/bridgely-demo-2.mp4" autoplay loop muted playsinline></video>
+![VS Code showing proposed changes from Claude](images/demo-diff.gif)
 
 ## Why
 
