@@ -10,7 +10,7 @@ import (
 func main() {
 	ensureBridgeDir()
 
-	s := server.NewMCPServer("bridgely", "0.1.1")
+	s := server.NewMCPServer("bridgely", "0.1.2")
 
 	s.AddTool(mcp.NewTool("editor_sessions",
 		mcp.WithDescription("List all active editor sessions (VS Code, Cursor, etc.)"),

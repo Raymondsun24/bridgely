@@ -2,7 +2,7 @@
   "name": "bridgely",
   "displayName": "Bridgely – Claude Code Bridge for VS Code",
   "description": "Bidirectional bridge between VS Code/Cursor and Claude Code running in any terminal",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "Raymondsun24",
   "repository": {
     "type": "git",

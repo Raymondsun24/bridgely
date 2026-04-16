@@ -1,6 +1,5 @@
 import * as fs from "fs";
 import * as vscode from "vscode";
-import * as os from "os";
 import * as path from "path";
 import {
   BridgeCommand,
@@ -16,6 +15,7 @@ import { safeReadJson, atomicWriteJson } from "./atomicFile";
 import {
   getSessionCommandsPath,
   getSessionCommandResultsPath,
+  getProposedDir,
 } from "../utils/paths";
 
 export class CommandWatcher implements vscode.Disposable {
@@ -137,7 +137,7 @@ export class CommandWatcher implements vscode.Disposable {
     const uri = vscode.Uri.file(args.path);
     const doc = await vscode.workspace.openTextDocument(uri);
     const editor = await vscode.window.showTextDocument(doc, {
-      preview: args.preview ?? true,
+      preview: args.preview ?? false,
     });
 
     if (args.line) {
@@ -286,10 +286,20 @@ export class CommandWatcher implements vscode.Disposable {
       });
     }
 
-    // Compute the proposed content
+    // Compute the proposed content and the line where the edit lands
     let proposedContent: string;
+    let targetLine = 0;
     if (args.tool_name === "Write") {
       proposedContent = args.content ?? "";
+      // Find the first line that differs
+      const curLines = currentContent.split("\n");
+      const propLines = proposedContent.split("\n");
+      for (let i = 0; i < Math.min(curLines.length, propLines.length); i++) {
+        if (curLines[i] !== propLines[i]) {
+          targetLine = i;
+          break;
+        }
+      }
     } else {
       // Edit tool: replace old_string with new_string
       const oldStr = args.old_string ?? "";
@@ -304,14 +314,20 @@ export class CommandWatcher implements vscode.Disposable {
         currentContent.substring(0, idx) +
         newStr +
         currentContent.substring(idx + oldStr.length);
+      targetLine = currentContent.substring(0, idx).split("\n").length - 1;
     }
 
-    // Write proposed content to a temp file
-    const tmpDir = os.tmpdir();
+    // Close any stale diff tabs before opening a new one
+    await this.closeAllProposedDiffTabs();
+
+    // Write proposed content to ~/.claude/bridge/proposed/
+    const proposedDir = getProposedDir();
+    fs.mkdirSync(proposedDir, { recursive: true });
     const ext = path.extname(filePath);
     const baseName = path.basename(filePath, ext);
-    const tmpPath = path.join(tmpDir, `${baseName}.proposed${ext}`);
+    const tmpPath = path.join(proposedDir, `${baseName}.proposed${ext}`);
     fs.writeFileSync(tmpPath, proposedContent);
+    this.lastProposedTmpPath = tmpPath;
     const proposedUri = vscode.Uri.file(tmpPath);
 
     // Open side-by-side diff: current (left) vs proposed (right)
@@ -322,54 +338,54 @@ export class CommandWatcher implements vscode.Disposable {
       `${rel} ← proposed edit`
     );
 
-    this.lastProposedTmpPath = tmpPath;
+    // Scroll the diff editor to the edited line
+    const editor = vscode.window.activeTextEditor;
+    if (editor) {
+      const pos = new vscode.Position(targetLine, 0);
+      editor.revealRange(
+        new vscode.Range(pos, pos),
+        vscode.TextEditorRevealType.InCenter
+      );
+    }
 
     return this.makeResult(id, "ok", {
       message: `Previewing edit for ${rel}`,
     });
   }
 
-  private async handleClosePreview(id: string): Promise<CommandResult> {
-    if (!this.lastProposedTmpPath) {
-      return this.makeResult(id, "ok", {
-        message: "No preview to close",
-      });
-    }
-
-    const tmpUri = vscode.Uri.file(this.lastProposedTmpPath);
-
-    // Find and close tabs showing the proposed temp file
+  private async closeAllProposedDiffTabs(): Promise<void> {
+    const proposedDir = getProposedDir();
     for (const group of vscode.window.tabGroups.all) {
       for (const tab of group.tabs) {
         const input = tab.input;
-        // Diff tabs have a TabInputTextDiff input type
-        if (
-          input instanceof vscode.TabInputTextDiff &&
-          (input.modified.fsPath === tmpUri.fsPath ||
-            input.original.fsPath === tmpUri.fsPath)
-        ) {
-          await vscode.window.tabGroups.close(tab);
-        } else if (
-          input instanceof vscode.TabInputText &&
-          input.uri.fsPath === tmpUri.fsPath
-        ) {
-          await vscode.window.tabGroups.close(tab);
+        if (input instanceof vscode.TabInputTextDiff) {
+          if (
+            input.modified.fsPath.startsWith(proposedDir) ||
+            input.original.fsPath.startsWith(proposedDir)
+          ) {
+            await vscode.window.tabGroups.close(tab);
+          }
+        } else if (input instanceof vscode.TabInputText) {
+          if (input.uri.fsPath.startsWith(proposedDir)) {
+            await vscode.window.tabGroups.close(tab);
+          }
         }
       }
     }
-
-    // Clean up the temp file
+    // Delete all leftover proposed files
     try {
-      fs.unlinkSync(this.lastProposedTmpPath);
-    } catch {
-      // Already gone
-    }
-
+      for (const f of fs.readdirSync(proposedDir)) {
+        try {
+          fs.unlinkSync(path.join(proposedDir, f));
+        } catch { /* already gone */ }
+      }
+    } catch { /* dir may not exist yet */ }
     this.lastProposedTmpPath = null;
+  }
 
-    return this.makeResult(id, "ok", {
-      message: "Preview closed",
-    });
+  private async handleClosePreview(id: string): Promise<CommandResult> {
+    await this.closeAllProposedDiffTabs();
+    return this.makeResult(id, "ok", { message: "Preview closed" });
   }
 
   private handleGetTerminalOutput(
