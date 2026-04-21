@@ -1,0 +1,25 @@
+<idea-plugin>
+    <id>com.raymondsun24.bridgely</id>
+    <name>Bridgely</name>
+    <version>0.1.0</version>
+    <vendor url="https://github.com/Raymondsun24/bridgely">Raymondsun24</vendor>
+
+    <description><![CDATA[
+        Bidirectional bridge between JetBrains IDEs and Claude Code running in any terminal.<br/>
+        Gives Claude real-time awareness of your editor state and lets it open files,
+        show diffs, and fetch LSP diagnostics — without leaving your external terminal.
+    ]]></description>
+
+    <change-notes><![CDATA[
+        <b>0.1.0</b> — Initial JetBrains release. Supports editor state sync, file open,
+        reveal line, get selection, diagnostics, git diff, and edit preview.
+    ]]></change-notes>
+
+    <!-- Works on any JetBrains IDE built on the IntelliJ Platform -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <projectService serviceImplementation="com.raymondsun24.bridgely.BridgelyService"/>
+        <postStartupActivity implementation="com.raymondsun24.bridgely.BridgelyStartupActivity"/>
+    </extensions>
+</idea-plugin>

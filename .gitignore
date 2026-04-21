@@ -4,3 +4,5 @@ node_modules/
 .vscode-test/
 .claude/
 mcp/bridgely
+.idea/
+jetbrains-plugin/build/

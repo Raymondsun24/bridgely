@@ -2,7 +2,7 @@ MCP_BIN  := mcp/bridgely
 VERSION  := $(shell node -p "require('./package.json').version")
 VSIX     := bridgely-$(VERSION).vsix
 
-.PHONY: all extension mcp watch package install-extension clean test lint help
+.PHONY: all extension mcp watch package install-extension jetbrains clean test lint help
 
 # ── Default ───────────────────────────────────────────────────────────────────
 # End-users only need `make mcp` — the extension is installed from the marketplace.
@@ -34,6 +34,10 @@ package:
 install-extension: package
 	code --install-extension $(VSIX) || cursor --install-extension $(VSIX)
 
+## jetbrains: Build the JetBrains plugin (requires Gradle wrapper bootstrapped first)
+jetbrains:
+	cd jetbrains-plugin && ./gradlew buildPlugin
+
 ## test: Run all tests (extension + MCP server)
 test:
 	npm test
@@ -63,6 +67,7 @@ help:
 	@echo "  watch              Watch mode for extension TypeScript"
 	@echo "  package            Bundle extension into a .vsix file"
 	@echo "  install-extension  Package and install .vsix into VS Code/Cursor"
+	@echo "  jetbrains          Build the JetBrains plugin"
 	@echo "  test               Run all tests"
 	@echo "  lint               Lint all code"
 	@echo "  clean              Remove build artifacts"
