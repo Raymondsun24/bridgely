@@ -29,6 +29,15 @@ There's no option that gives you both.
 
 Bridgely fixes that. You run Claude Code in whatever terminal you want, and the bridge keeps your editor and Claude in sync — Claude sees your active file and selection on every prompt, and can open files, preview diffs, and pull LSP diagnostics directly in VS Code or Cursor.
 
+## IDE Support
+
+| IDE | Status |
+|-----|--------|
+| VS Code | Stable (published to Marketplace) |
+| Cursor | Stable (same extension as VS Code) |
+| IntelliJ IDEA | In development (`jetbrains-plugin/`) |
+| PyCharm, WebStorm, GoLand, PhpStorm, CLion, Rider | Covered by same JetBrains plugin |
+
 ## Architecture
 
 ```
@@ -177,7 +186,15 @@ Requires [shell integration](https://code.visualstudio.com/docs/terminal/shell-i
 
 **Note:** Shell integration only activates for terminals created _after_ the setting is enabled.
 
+### Terminal output capture
+
+> **JetBrains:** Terminal output capture (`getTerminalOutput`) is not yet implemented in the JetBrains plugin. The JetBrains platform does not expose a public shell-integration API equivalent to VS Code's `onDidEndTerminalShellExecution`. This is tracked as a future improvement.
+
 ### VS Code/Cursor extension detection
 
 When Claude is launched from the VS Code/Cursor Claude extension (not a terminal), `bridgely hook:context` automatically skips — the extension already has native editor awareness. `hook:preview` and `hook:edit` still run. Detection uses the `CLAUDE_CODE_SSE_PORT` environment variable.
+
+## JetBrains Plugin
+
+See [`jetbrains-plugin/README.md`](jetbrains-plugin/README.md) for installation and setup.
 
