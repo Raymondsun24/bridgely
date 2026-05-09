@@ -9,6 +9,8 @@ eslint.config.mjs
 Makefile
 cli/**
 mcp/**
+jetbrains-plugin/**
+.idea/**
 **/*.ts
 **/*.map
 **/*.vsix

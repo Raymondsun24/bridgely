@@ -8,6 +8,10 @@
 
 > **Migration notice:** The `bridgely` CLI has been removed. All functionality is now available as MCP tools — no shell scripts, no `jq` dependency, no hooks. See [Migrating from the CLI](#migrating-from-the-cli) if you used a previous version.
 
+> **Status:** Claude Code now ships a built-in **Auto-connect to IDE (external terminal)** setting (`/config`) that covers the core use case this project was built for. As a result, active maintenance here will wind down. The project remains open — feel free to explore, fork, and contribute if you find it useful.
+>
+> Bridgely still adds a couple of things the built-in doesn't: **automatic session binding** (routes Claude to the right editor when multiple are open) and **terminal output capture** (read recent command output directly from the integrated terminal — VS Code/Cursor only for now).
+
 Bidirectional bridge between VS Code/Cursor/JetBrains and Claude Code running in any terminal. Gives Claude real-time awareness of your editor state and lets it open files, show diffs, and fetch LSP diagnostics.
 
 ## Demo
