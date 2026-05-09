@@ -33,6 +33,108 @@ func writeSessionFile(t *testing.T, dir string, state editorState) {
 	}
 }
 
+// ── readBindings / writeBindings / boundSession ───────────────────────────────
+
+func TestReadBindings_Missing(t *testing.T) {
+	setupBridgeDir(t)
+	b := readBindings()
+	if len(b) != 0 {
+		t.Errorf("expected empty bindings, got %v", b)
+	}
+}
+
+func TestReadBindings_Valid(t *testing.T) {
+	dir := setupBridgeDir(t)
+	data := []byte(`{"/home/user/projects": "VSCode-1", "/home/user/other": "Cursor-2"}`)
+	os.WriteFile(filepath.Join(dir, "bindings.json"), data, 0o600)
+
+	b := readBindings()
+	if b["/home/user/projects"] != "VSCode-1" {
+		t.Errorf("unexpected binding: %v", b)
+	}
+	if b["/home/user/other"] != "Cursor-2" {
+		t.Errorf("unexpected binding: %v", b)
+	}
+}
+
+func TestWriteBindings_Roundtrip(t *testing.T) {
+	setupBridgeDir(t)
+	want := map[string]string{"/a/b": "session-1", "/c/d": "session-2"}
+	if err := writeBindings(want); err != nil {
+		t.Fatalf("writeBindings: %v", err)
+	}
+	got := readBindings()
+	for k, v := range want {
+		if got[k] != v {
+			t.Errorf("binding[%q] = %q, want %q", k, got[k], v)
+		}
+	}
+}
+
+func TestBoundSession(t *testing.T) {
+	bindings := map[string]string{
+		"/home/user/projects":     "VSCode-1",
+		"/home/user/projects/sub": "Cursor-2",
+	}
+
+	tests := []struct {
+		dir  string
+		want string
+	}{
+		{"/home/user/projects", "VSCode-1"},
+		{"/home/user/projects/sub", "Cursor-2"},
+		{"/home/user/projects/sub/src", "Cursor-2"},
+		{"/home/user/projects/other", "VSCode-1"},
+		{"/home/user/unrelated", ""},
+		{"/home/user/projects-extra", ""}, // must not match as prefix
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.dir, func(t *testing.T) {
+			got := boundSession(tc.dir, bindings)
+			if got != tc.want {
+				t.Errorf("boundSession(%q) = %q, want %q", tc.dir, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestResolveSession_UsesBinding(t *testing.T) {
+	dir := setupBridgeDir(t)
+	now := time.Now()
+	writeSessionFile(t, dir, editorState{SessionID: "VSCode-1", Timestamp: now.UnixMilli()})
+	writeSessionFile(t, dir, editorState{SessionID: "Cursor-2", Timestamp: now.Add(-10 * time.Second).UnixMilli()})
+
+	cwd, _ := os.Getwd()
+	data, _ := json.Marshal(map[string]string{cwd: "Cursor-2"})
+	os.WriteFile(filepath.Join(dir, "bindings.json"), data, 0o600)
+
+	s := resolveSession("")
+	if s == nil {
+		t.Fatal("expected a session, got nil")
+	}
+	if s.id != "Cursor-2" {
+		t.Errorf("expected bound session Cursor-2, got %s", s.id)
+	}
+}
+
+func TestResolveSession_SkipsStaleBinding(t *testing.T) {
+	dir := setupBridgeDir(t)
+	writeSessionFile(t, dir, editorState{SessionID: "VSCode-1", Timestamp: time.Now().UnixMilli()})
+
+	cwd, _ := os.Getwd()
+	data, _ := json.Marshal(map[string]string{cwd: "GoneSession"})
+	os.WriteFile(filepath.Join(dir, "bindings.json"), data, 0o600)
+
+	s := resolveSession("")
+	if s == nil {
+		t.Fatal("expected a fallback session, got nil")
+	}
+	if s.id != "VSCode-1" {
+		t.Errorf("expected fallback VSCode-1, got %s", s.id)
+	}
+}
+
 // ── isFresh ──────────────────────────────────────────────────────────────────
 
 func TestIsFresh(t *testing.T) {
@@ -209,6 +311,125 @@ func TestListSessions(t *testing.T) {
 			t.Fatalf("expected 1 session (commands file ignored), got %d", len(sessions))
 		}
 	})
+}
+
+// simulateEditorResponse watches for a command at dir/sessions/<sessionID>.commands.json,
+// reads its ID, and writes a matching result to the result file. Run before calling sendCommand.
+func simulateEditorResponse(t *testing.T, dir, sessionID string, payload commandPayload) {
+	t.Helper()
+	cmdPath := filepath.Join(dir, "sessions", sessionID+".commands.json")
+	resultPath := filepath.Join(dir, "sessions", sessionID+".commands-result.json")
+
+	go func() {
+		for range 200 {
+			time.Sleep(10 * time.Millisecond)
+			data, err := os.ReadFile(cmdPath)
+			if err != nil || len(data) == 0 {
+				continue
+			}
+			var cmd struct {
+				ID string `json:"id"`
+			}
+			if err := json.Unmarshal(data, &cmd); err != nil || cmd.ID == "" {
+				continue
+			}
+			result := commandResult{ID: cmd.ID, Result: payload}
+			out, _ := json.Marshal(result)
+			_ = os.WriteFile(resultPath, out, 0o600)
+			return
+		}
+		t.Errorf("simulateEditorResponse: timed out waiting for command (session %s)", sessionID)
+	}()
+}
+
+// ── sendCommand ───────────────────────────────────────────────────────────────
+
+func TestSendCommand_WritesCommandAndReadsResult(t *testing.T) {
+	dir := setupBridgeDir(t)
+	writeSessionFile(t, dir, editorState{
+		SessionID: "VSCode-cmd",
+		Timestamp: time.Now().UnixMilli(),
+	})
+
+	sessions := listSessions()
+	if len(sessions) == 0 {
+		t.Fatal("expected a session")
+	}
+	s := &sessions[0]
+
+	simulateEditorResponse(t, dir, "VSCode-cmd", commandPayload{Message: "pong"})
+
+	result, err := sendCommand(s, "ping", map[string]any{"key": "value"})
+	if err != nil {
+		t.Fatalf("sendCommand: %v", err)
+	}
+	if result.Result.Message != "pong" {
+		t.Errorf("message = %q, want %q", result.Result.Message, "pong")
+	}
+}
+
+func TestSendCommand_WrittenCommandStructure(t *testing.T) {
+	dir := setupBridgeDir(t)
+	writeSessionFile(t, dir, editorState{
+		SessionID: "VSCode-struct",
+		Timestamp: time.Now().UnixMilli(),
+	})
+
+	sessions := listSessions()
+	s := &sessions[0]
+
+	// Capture what was written to the commands file before writing the result.
+	cmdPath := filepath.Join(dir, "sessions", "VSCode-struct.commands.json")
+	resultPath := filepath.Join(dir, "sessions", "VSCode-struct.commands-result.json")
+	written := make(chan map[string]any, 1)
+
+	go func() {
+		for range 200 {
+			time.Sleep(10 * time.Millisecond)
+			data, err := os.ReadFile(cmdPath)
+			if err != nil || len(data) == 0 {
+				continue
+			}
+			var cmd map[string]any
+			if err := json.Unmarshal(data, &cmd); err != nil {
+				continue
+			}
+			if _, ok := cmd["id"]; !ok {
+				continue
+			}
+			written <- cmd
+			result := commandResult{ID: cmd["id"].(string), Result: commandPayload{Message: "ok"}}
+			out, _ := json.Marshal(result)
+			_ = os.WriteFile(resultPath, out, 0o600)
+			return
+		}
+	}()
+
+	if _, err := sendCommand(s, "testCmd", map[string]any{"foo": "bar"}); err != nil {
+		t.Fatalf("sendCommand: %v", err)
+	}
+
+	select {
+	case cmd := <-written:
+		if cmd["command"] != "testCmd" {
+			t.Errorf("command = %v, want testCmd", cmd["command"])
+		}
+		args, _ := cmd["args"].(map[string]any)
+		if args["foo"] != "bar" {
+			t.Errorf("args.foo = %v, want bar", args["foo"])
+		}
+		if cmd["version"] != float64(1) {
+			t.Errorf("version = %v, want 1", cmd["version"])
+		}
+		if _, ok := cmd["id"]; !ok {
+			t.Error("id field missing from command")
+		}
+		if _, ok := cmd["timestamp"]; !ok {
+			t.Error("timestamp field missing from command")
+		}
+	default:
+		t.Error("no command was written")
+	}
 }
 
 // ── resolveSession ────────────────────────────────────────────────────────────
