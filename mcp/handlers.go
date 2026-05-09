@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -206,6 +207,136 @@ func handleEditorRevealLine(_ context.Context, req mcp.CallToolRequest) (*mcp.Ca
 	result, err := sendCommand(s, "revealLine", map[string]any{"path": path, "line": line})
 	if err != nil {
 		return mcp.NewToolResultText("Failed to reveal line: " + err.Error()), nil
+	}
+	return mcp.NewToolResultText(result.Result.Message), nil
+}
+
+func handleEditorBind(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	cwd, _ := req.GetArguments()["cwd"].(string)
+	if cwd == "" {
+		var err error
+		if cwd, err = os.Getwd(); err != nil {
+			return mcp.NewToolResultText("Failed to get current directory: " + err.Error()), nil
+		}
+	}
+
+	sid, _ := req.GetArguments()["sessionId"].(string)
+	s := resolveSession(sid)
+	if s == nil {
+		return mcp.NewToolResultText("No active editor session found. Use editor_sessions to list available sessions."), nil
+	}
+
+	bindings := readBindings()
+	bindings[cwd] = s.id
+	if err := writeBindings(bindings); err != nil {
+		return mcp.NewToolResultText("Failed to write bindings: " + err.Error()), nil
+	}
+	return mcp.NewToolResultText(fmt.Sprintf("Bound %s → %s", cwd, s.id)), nil
+}
+
+func handleEditorUnbind(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	cwd, _ := req.GetArguments()["cwd"].(string)
+	if cwd == "" {
+		var err error
+		if cwd, err = os.Getwd(); err != nil {
+			return mcp.NewToolResultText("Failed to get current directory: " + err.Error()), nil
+		}
+	}
+
+	bindings := readBindings()
+	sid, ok := bindings[cwd]
+	if !ok {
+		return mcp.NewToolResultText(fmt.Sprintf("No binding for %s", cwd)), nil
+	}
+	delete(bindings, cwd)
+	if err := writeBindings(bindings); err != nil {
+		return mcp.NewToolResultText("Failed to write bindings: " + err.Error()), nil
+	}
+	return mcp.NewToolResultText(fmt.Sprintf("Removed binding %s → %s", cwd, sid)), nil
+}
+
+func handleEditorListBindings(_ context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	bindings := readBindings()
+	if len(bindings) == 0 {
+		return mcp.NewToolResultText("No bindings configured."), nil
+	}
+
+	cwd, _ := os.Getwd()
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "%d binding(s):\n", len(bindings))
+	for dir, sid := range bindings {
+		current := ""
+		if dir == cwd {
+			current = " (current directory)"
+		}
+		fmt.Fprintf(&sb, "  %s → %s%s\n", dir, sid, current)
+	}
+	return mcp.NewToolResultText(strings.TrimRight(sb.String(), "\n")), nil
+}
+
+func handleEditorPreviewEdit(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	filePath, _ := req.GetArguments()["file_path"].(string)
+	if filePath == "" {
+		return mcp.NewToolResultText("Missing required parameter: file_path"), nil
+	}
+	toolName, _ := req.GetArguments()["tool_name"].(string)
+	if toolName == "" {
+		toolName = "Edit"
+	}
+	sid, _ := req.GetArguments()["sessionId"].(string)
+	s := resolveSession(sid)
+	if s == nil {
+		return mcp.NewToolResultText("No active editor session found."), nil
+	}
+
+	args := map[string]any{"file_path": filePath, "tool_name": toolName}
+	// Template variables from mcp_tool hooks resolve to "" when the field is
+	// absent, so only forward non-empty optional strings.
+	if v, _ := req.GetArguments()["old_string"].(string); v != "" {
+		args["old_string"] = v
+	}
+	if v, _ := req.GetArguments()["new_string"].(string); v != "" {
+		args["new_string"] = v
+	}
+	if v, _ := req.GetArguments()["content"].(string); v != "" {
+		args["content"] = v
+	}
+
+	result, err := sendCommand(s, "previewEdit", args)
+	if err != nil {
+		return mcp.NewToolResultText("Failed to preview edit: " + err.Error()), nil
+	}
+	return mcp.NewToolResultText(result.Result.Message), nil
+}
+
+func handleEditorClosePreview(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	sid, _ := req.GetArguments()["sessionId"].(string)
+	s := resolveSession(sid)
+	if s == nil {
+		return mcp.NewToolResultText("No active editor session found."), nil
+	}
+
+	result, err := sendCommand(s, "closePreview", map[string]any{})
+	if err != nil {
+		return mcp.NewToolResultText("Failed to close preview: " + err.Error()), nil
+	}
+	return mcp.NewToolResultText(result.Result.Message), nil
+}
+
+func handleEditorShowDiff(_ context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	path, _ := req.GetArguments()["path"].(string)
+	if path == "" {
+		return mcp.NewToolResultText("Missing required parameter: path"), nil
+	}
+	sid, _ := req.GetArguments()["sessionId"].(string)
+	s := resolveSession(sid)
+	if s == nil {
+		return mcp.NewToolResultText("No active editor session found."), nil
+	}
+
+	result, err := sendCommand(s, "showDiff", map[string]any{"path": path})
+	if err != nil {
+		return mcp.NewToolResultText("Failed to show diff: " + err.Error()), nil
 	}
 	return mcp.NewToolResultText(result.Result.Message), nil
 }

@@ -114,6 +114,15 @@ func resolveSession(sessionID string) *session {
 		return nil
 	}
 
+	// CWD binding — longest prefix match
+	if cwd, err := os.Getwd(); err == nil {
+		if sid := boundSession(cwd, readBindings()); sid != "" {
+			if i := slices.IndexFunc(sessions, func(s session) bool { return s.id == sid }); i >= 0 {
+				return &sessions[i]
+			}
+		}
+	}
+
 	if len(sessions) > 0 {
 		return &sessions[0]
 	}
@@ -124,6 +133,50 @@ func resolveSession(sessionID string) *session {
 		return &session{id: "legacy", file: legacyStateFile(), state: state}
 	}
 	return nil
+}
+
+// ── Bindings ──────────────────────────────────────────────────────────────────
+
+func bindingsFile() string {
+	return filepath.Join(bridgeDir(), "bindings.json")
+}
+
+func readBindings() map[string]string {
+	data, err := os.ReadFile(bindingsFile())
+	if err != nil {
+		return map[string]string{}
+	}
+	var b map[string]string
+	if err := json.Unmarshal(data, &b); err != nil {
+		return map[string]string{}
+	}
+	return b
+}
+
+func writeBindings(b map[string]string) error {
+	data, err := json.MarshalIndent(b, "", "  ")
+	if err != nil {
+		return err
+	}
+	tmp := fmt.Sprintf("%s.%d.tmp", bindingsFile(), os.Getpid())
+	if err := os.WriteFile(tmp, data, 0o600); err != nil {
+		return err
+	}
+	return os.Rename(tmp, bindingsFile())
+}
+
+// boundSession returns the session ID bound to dir via longest-prefix match.
+// The prefix must be an exact match or a proper parent directory (ends with /).
+func boundSession(dir string, bindings map[string]string) string {
+	best, bestLen := "", 0
+	for prefix, sid := range bindings {
+		if dir == prefix || strings.HasPrefix(dir, strings.TrimRight(prefix, "/")+"/") {
+			if len(prefix) > bestLen {
+				best, bestLen = sid, len(prefix)
+			}
+		}
+	}
+	return best
 }
 
 // ── Command sending ───────────────────────────────────────────────────────────
@@ -179,3 +232,4 @@ func sendCommand(s *session, command string, args map[string]any) (commandResult
 	}
 	return commandResult{}, fmt.Errorf("timeout waiting for editor response")
 }
+

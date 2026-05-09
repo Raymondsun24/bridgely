@@ -8,7 +8,7 @@ Gives Claude Code real-time awareness of your editor state and lets it open file
 
 - JDK 17+
 - Gradle (or use the included wrapper after bootstrapping)
-- The shared Bridgely CLI and MCP server — see the [main README](../README.md#setup)
+- The Bridgely MCP server — see the [main README](../README.md#setup)
 
 ## Installation
 
@@ -36,12 +36,13 @@ The plugin activates automatically on project open — no additional configurati
 
 ### 3. Verify
 
-Open a project, then run in your terminal:
+Open a project, then ask Claude:
 
-```bash
-bridgely sessions   # should list an IntelliJ-{project}-{PID} session
-bridgely status     # shows active file, cursor, and workspace
 ```
+What editor sessions do you see?
+```
+
+Claude will call `editor_sessions` and should list an `IntelliJ-{project}-{PID}` session.
 
 Session IDs follow the pattern `{IDEName}-{projectName}-{PID}` (e.g. `IntelliJ-myblog-12345`).
 
@@ -59,25 +60,3 @@ Session IDs follow the pattern `{IDEName}-{projectName}-{PID}` (e.g. `IntelliJ-m
 | Auto-close diff after edit | ✅ |
 | Jump to edited line after diff closes | ✅ |
 | Terminal output capture | 🔜 future |
-
-## Hooks
-
-The same Claude Code hooks used for VS Code work here:
-
-```json
-{
-  "hooks": {
-    "UserPromptSubmit": [
-      { "matcher": "", "hooks": [{ "type": "command", "command": "bridgely hook:context", "timeout": 3 }] }
-    ],
-    "PreToolUse": [
-      { "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": "bridgely hook:preview", "timeout": 5 }] }
-    ],
-    "PostToolUse": [
-      { "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": "bridgely hook:edit", "timeout": 3 }] }
-    ]
-  }
-}
-```
-
-Add these to `~/.claude/settings.json`. See the [main README](../README.md#4-configure-claude-code-hooks) for the full hooks setup.
