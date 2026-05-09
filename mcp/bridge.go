@@ -232,4 +232,3 @@ func sendCommand(s *session, command string, args map[string]any) (commandResult
 	}
 	return commandResult{}, fmt.Errorf("timeout waiting for editor response")
 }
-
